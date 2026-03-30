@@ -4,6 +4,9 @@ import WeatherDisplay from './components/WeatherDisplay';
 import WeatherGrid from './components/WeatherGrid';
 import SearchBar from './components/SearchBar';
 
+const GEOCODE_API_BASE = 'https://nominatim.openstreetmap.org';
+const WEATHER_API_BASE = 'https://api.open-meteo.com';
+
 function App() {
   const [cities, setCities] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -32,7 +35,12 @@ function App() {
     try {
       // Geocode the city name
       const geoResponse = await fetch(
-        `/api/geocode/search?q=${encodeURIComponent(cityName)}&format=json&limit=1`
+        `${GEOCODE_API_BASE}/search?q=${encodeURIComponent(cityName)}&format=json&limit=1&addressdetails=1`,
+        {
+          headers: {
+            Accept: 'application/json',
+          },
+        }
       );
       
       if (!geoResponse.ok) throw new Error('Geocoding service error');
@@ -46,7 +54,7 @@ function App() {
       const { lat, lon, address } = geoData[0];
       
       const weatherResponse = await fetch(
-        `/api/weather/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,apparent_temperature,pressure_msl,cloud_cover,is_day&timezone=auto`
+        `${WEATHER_API_BASE}/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,apparent_temperature,pressure_msl,cloud_cover,is_day&timezone=auto`
       );
       
       if (!weatherResponse.ok) throw new Error('Weather service error');
@@ -86,14 +94,19 @@ function App() {
   const fetchWeatherByCoords = async (lat, lon) => {
     try {
       const response = await fetch(
-        `/api/weather/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,apparent_temperature,pressure_msl,cloud_cover,is_day&timezone=auto`
+        `${WEATHER_API_BASE}/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,weather_code,wind_speed_10m,relative_humidity_2m,apparent_temperature,pressure_msl,cloud_cover,is_day&timezone=auto`
       );
       if (!response.ok) throw new Error('Weather data fetch failed');
       
       const data = await response.json();
       
       const geoResponse = await fetch(
-        `/api/geocode/reverse?format=json&lat=${lat}&lon=${lon}`
+        `${GEOCODE_API_BASE}/reverse?format=json&lat=${lat}&lon=${lon}&addressdetails=1`,
+        {
+          headers: {
+            Accept: 'application/json',
+          },
+        }
       );
       const geoData = await geoResponse.json();
 
